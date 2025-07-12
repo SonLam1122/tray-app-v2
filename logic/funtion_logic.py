@@ -11,6 +11,7 @@ import re
 Current2FAKey = None
 PartBuffer = []
 LastValidClipboard = None
+CurrentIndex = 1
 
 # Regex kiểm tra key 2FA hợp lệ
 BASE32_REGEX = re.compile(r'^[A-Z2-7]{16,}$')
@@ -54,3 +55,4 @@ def execute_action(action):
                 LastValidClipboard = clipboard
             else:
                 PartBuffer.clear()
+                
