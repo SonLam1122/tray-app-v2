@@ -1,11 +1,12 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QRadioButton, QButtonGroup, QPushButton, QApplication, QLineEdit, QTextEdit
-from PyQt5.QtCore import Qt, QTimer, QPoint
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIntValidator
-from controllers.function_controller import Function1Controller
-import logic.funtion_logic as logic
+from util.util import move_to_bottom_right, back_to_main
+from controllers.function1_controller import Function1Controller
+import logic.funtion1_logic as logic
 import pyperclip
 
-class FunctionWindow(QWidget):
+class Function1Window(QWidget):
     def __init__(self, on_back):
         super().__init__()
         self.on_back = on_back
@@ -29,29 +30,43 @@ class FunctionWindow(QWidget):
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(8, 8, 8, 8)
+        main_layout.setSpacing(6)
 
-        title = QLabel("Tray App", self)
+        title = QLabel("Function 1 (Radio)", self)
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("color: white; font-size: 12px; font-weight: bold;")
+        title.setStyleSheet("color: white; font-size: 11px; font-weight: bold;")
         main_layout.addWidget(title)
 
+        # Radio buttons
         self.radio_group = QButtonGroup(self)
         for action in self.controller.get_available_actions():
             btn = QRadioButton(action)
-            btn.setStyleSheet("color: white; font-size: 10px;")
+            btn.setStyleSheet("""
+                QRadioButton {
+                    color: white;
+                    font-size: 9.5px;
+                    padding: 2px;
+                }
+                QRadioButton::indicator {
+                    width: 10px;
+                    height: 10px;
+                }
+            """)
             self.radio_group.addButton(btn)
             main_layout.addWidget(btn)
-            btn.toggled.connect(self.on_action_selected)
+            btn.toggled.connect(lambda checked, b=btn: self.on_action_selected_checked(b, checked))
 
-        self.key_label = QLabel("🔑 None", self)
-        self.key_label.setStyleSheet("color: #80ff80; font-size: 10px;")
+        # Key label
+        self.key_label = QLabel("Key: None", self)
+        self.key_label.setStyleSheet("color: #80ff80; font-size: 9.5px;")
         main_layout.addWidget(self.key_label)
 
+        # Paste block
         self.paste_widget = QWidget(self)
         paste_layout = QVBoxLayout(self.paste_widget)
         paste_layout.setContentsMargins(0, 5, 0, 5)
+        paste_layout.setSpacing(4)
 
         index_layout = QHBoxLayout()
         index_label = QLabel("Index:", self)
@@ -75,28 +90,60 @@ class FunctionWindow(QWidget):
         main_layout.addWidget(self.paste_widget)
         main_layout.addStretch()
 
-        btn_quit = QPushButton("❌")
-        btn_quit.setFixedSize(60, 26)
-        btn_quit.setStyleSheet("color: white; font-size: 11px; background-color: #c0392b; border-radius: 4px;")
-        btn_quit.clicked.connect(QApplication.quit)
+        # Cookie display input
+        self.cookie_input = QTextEdit(self)
+        self.cookie_input.setStyleSheet("""
+            color: #ffd480;
+            font-size: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 4px;
+        """)
+        self.cookie_input.setPlaceholderText("Cookies sẽ hiển thị ở đây...")
+        self.cookie_input.setReadOnly(True)
+        self.cookie_input.setFixedHeight(185) 
+        main_layout.addWidget(self.cookie_input)
+        self.cookie_input.setVisible(False)
         
+        # Back button
+        btn_back = QPushButton("Quay lại")
+        btn_back.setFixedSize(80, 26)
+        btn_back.setStyleSheet("""
+            QPushButton {
+                color: white;
+                font-size: 10px;
+                background-color: #c0392b;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #e74c3c;
+            }
+        """)
+        btn_back.clicked.connect(lambda: back_to_main(self))
+
         footer = QHBoxLayout()
         footer.addStretch()
-        footer.addWidget(btn_quit)
+        footer.addWidget(btn_back)
         main_layout.addLayout(footer)
 
         self.paste_widget.setVisible(False)
-        self.move_to_bottom_right()
-        
-    def on_action_selected(self):
-        btn = self.radio_group.checkedButton()
-        if btn and btn.isChecked():
-            self.selected_action = btn.text()
+        move_to_bottom_right(self, position=15)
+
+    def on_action_selected_checked(self, button, checked):
+        if checked and button == self.radio_group.checkedButton():
+            self.selected_action = button.text()
             print(f"🔘 Action selected: {self.selected_action}")
+
             is_paste_action = self.selected_action == "Dán từng phần chuỗi có dấu |"
+            is_cookie_action = self.selected_action == "Convert Cookie sang JSON"
+
             self.paste_widget.setVisible(is_paste_action)
-            self.key_label.setVisible(not is_paste_action)
+            self.cookie_input.setVisible(is_cookie_action)
+            self.key_label.setVisible(not is_paste_action and not is_cookie_action)
+
             self.check_clipboard(force=True)
+
 
     def on_index_changed(self, text):
         if text and text.isdigit():
@@ -105,38 +152,44 @@ class FunctionWindow(QWidget):
     def on_buffer_edited(self):
         if not self._is_updating_ui:
             text = self.buffer_edit.toPlainText()
-            logic.PartBuffer[:] = [line.strip() for line in text.split('\n') if line.strip()]
+            lines = [line.split('. ', 1)[1] if '. ' in line else line for line in text.split('\n') if line.strip()]
+            logic.PartBuffer[:] = lines
 
     def check_clipboard(self, force=False):
         try:
-            text = pyperclip.paste().strip()
+            clipboard = QApplication.clipboard()
+            text = clipboard.text().strip()
             if text != self.last_clipboard or force:
                 self.last_clipboard = text
+
                 if self.selected_action == "Dán từng phần chuỗi có dấu |" and "|" in text:
                     if text != logic.LastValidClipboard:
                         self.controller.try_update_part_buffer(text)
-                # Gọi update_status_display sau khi clipboard thay đổi
+
+                elif self.selected_action == "Convert Cookie sang JSON":
+                    try:
+                        logic.CurrentCookieJson = logic.convert_cookie_to_json(text)
+                    except Exception as e:
+                        logic.CurrentCookieJson = "[Lỗi chuyển cookie sang JSON]"
+                
                 self.update_status_display()
+
         except pyperclip.PyperclipException:
             pass
 
     def update_status_display(self):
         self._is_updating_ui = True
-        
-        self.key_label.setText(f"🔑 {logic.Current2FAKey or 'None'}")
-        
-        current_buffer_text = "\n".join(logic.PartBuffer)
+
+        self.key_label.setText(f"{logic.Current2FAKey or 'None'}")
+
+        current_buffer_text = "\n".join(f"{i+1}. {line}" for i, line in enumerate(logic.PartBuffer))
         if self.buffer_edit.toPlainText() != current_buffer_text:
             self.buffer_edit.setPlainText(current_buffer_text)
-            
-        # Cập nhật ô nhập chỉ mục để phản ánh thay đổi từ logic
+
         if self.index_input.text() != str(logic.CurrentIndex):
             self.index_input.setText(str(logic.CurrentIndex))
-            
-        self._is_updating_ui = False
+        
+        if hasattr(self, 'cookie_input'):
+            self.cookie_input.setPlainText(logic.CurrentCookieJson or "")
 
-    def move_to_bottom_right(self):
-        screen = QApplication.primaryScreen().availableGeometry()
-        x = screen.right() - self.width() - 15
-        y = screen.bottom() - self.height() - 15
-        self.move(QPoint(x, y))
+        self._is_updating_ui = False

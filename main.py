@@ -1,11 +1,11 @@
 import sys
 from PyQt5.QtWidgets import QApplication
-from ui.function_window import FunctionWindow
+from ui.main_windows import MiniTrayWindow
 
 
 def main():
     app = QApplication(sys.argv)
-    window = FunctionWindow(None)
+    window = MiniTrayWindow()
     window.show()
     app.exec_()
 

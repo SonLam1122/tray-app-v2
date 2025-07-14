@@ -1,14 +1,18 @@
-import logic.funtion_logic as logic
-from logic.funtion_logic import BASE32_REGEX
+import logic.funtion1_logic as logic
+from logic.funtion1_logic import BASE32_REGEX
 import keyboard
-from logic.funtion_logic import PartBuffer, execute_action 
+from logic.funtion1_logic import PartBuffer
+from PyQt5.QtCore import QTimer
+import pyperclip
+from util.util import smart_type
 
 
 class Function1Controller:
     def __init__(self):
         self.actions = [
             "Sinh mã OTP từ 2FA Key",  
-            "Dán từng phần chuỗi có dấu |"
+            "Dán từng phần chuỗi có dấu |",
+            "Convert Cookie sang JSON",
         ]
 
     def get_available_actions(self):
@@ -18,31 +22,48 @@ class Function1Controller:
         def wrapped_execute_otp():
             selected_action = get_selected_action()
             if selected_action == "Sinh mã OTP từ 2FA Key":
-                execute_action(selected_action)
+                otp = logic.otp()
+                pyperclip.copy(otp)
+                smart_type(otp)
+                print(f"OTP: {otp}")
                 if on_data_updated:
                     on_data_updated()
-                    
+        
+        def wrapped_paste_by_index():
+            if get_selected_action and get_selected_action() == "Dán từng phần chuỗi có dấu |":
+                paste_by_index()
+                if on_data_updated:
+                    on_data_updated()
+
+        def wrapped_convert_cookie_to_json():
+            if get_selected_action() == "Convert Cookie sang JSON":
+                try:
+                    if logic.CurrentCookieJson:
+                        json = logic.CurrentCookieJson
+                        QTimer.singleShot(0, lambda: smart_type(json))
+                        smart_type(json)
+                except Exception as e:
+                    print(f"[!] Cookie convert error: {e}")
+
+                if on_data_updated:
+                    QTimer.singleShot(0, on_data_updated)
+                
         def paste_by_index():
             global CurrentIndex, PartBuffer
             try:
                 idx = int(logic.CurrentIndex) - 1
                 if 0 <= idx < len(logic.PartBuffer):
                     text_to_paste = logic.PartBuffer[idx]
-                    keyboard.write(text_to_paste)
+                    smart_type(text_to_paste)
                     logic.CurrentIndex += 1
                     if logic.CurrentIndex > len(logic.PartBuffer):
                         logic.CurrentIndex = 1
             except (ValueError, IndexError) as e:
                 print(f"Lỗi khi dán theo chỉ mục: {e}")
                 
-        def wrapped_paste_by_index():
-            paste_by_index()
-            if on_data_updated:
-                on_data_updated()
-    
-            
         keyboard.add_hotkey("ctrl+f1", wrapped_execute_otp, suppress=True)
         keyboard.add_hotkey("ctrl+shift+v", wrapped_paste_by_index, suppress=True)
+        keyboard.add_hotkey("ctrl+f2", wrapped_convert_cookie_to_json, suppress=True)
 
     def try_update_2fa_key(self, text):
         if BASE32_REGEX.match(text):
