@@ -40,7 +40,6 @@ class Function1Controller:
                 try:
                     if logic.CurrentCookieJson:
                         json = logic.CurrentCookieJson
-                        QTimer.singleShot(0, lambda: smart_type(json))
                         smart_type(json)
                 except Exception as e:
                     print(f"[!] Cookie convert error: {e}")

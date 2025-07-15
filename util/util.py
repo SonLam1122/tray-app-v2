@@ -16,10 +16,7 @@ def back_to_main(self):
         self.on_back()
 
 def smart_type(text: str):
-    print(f"[🧠] Smart typing with text: {text}")
     if is_feature_enabled("Human type"):
-        print("[🧠] Using human_type_handler")
         human_type_handler(text)
     else:
-        print("[⌨️] Using keyboard.write")
         keyboard.write(text)

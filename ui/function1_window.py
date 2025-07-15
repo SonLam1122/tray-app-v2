@@ -161,8 +161,14 @@ class Function1Window(QWidget):
             text = clipboard.text().strip()
             if text != self.last_clipboard or force:
                 self.last_clipboard = text
-
-                if self.selected_action == "Dán từng phần chuỗi có dấu |" and "|" in text:
+                
+                if self.selected_action == "Sinh mã OTP từ 2FA Key":
+                    if self.controller.try_update_2fa_key(text):
+                        logic.Current2FAKey = text
+                        self.update_status_display()
+                        return
+                
+                elif self.selected_action == "Dán từng phần chuỗi có dấu |" and "|" in text:
                     if text != logic.LastValidClipboard:
                         self.controller.try_update_part_buffer(text)
 

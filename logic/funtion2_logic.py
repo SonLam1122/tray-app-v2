@@ -55,55 +55,25 @@ def start_double_click_copy_monitor():
     threading.Thread(target=monitor, daemon=True).start()
 
 def human_type_handler(text: str):
-    """Giả lập hành vi gõ phím của người dùng khi in chuỗi văn bản."""
-    # Cấu hình các thông số mô phỏng (có thể điều chỉnh):
-    typing_speed = 0.1         # Tốc độ gõ cơ bản (giây mỗi ký tự, trung bình)
-    error_chance = 0.05        # Xác suất xảy ra lỗi gõ (gõ sai ký tự)
-    thinking_chance = 0.05     # Xác suất tạm dừng lâu (giả lập đang suy nghĩ)
-    thinking_pause_range = (1.0, 2.0)  # Khoảng thời gian dừng (giây) khi "suy nghĩ"
-    punctuation_pause_factor = 3      # Hệ số tăng thời gian dừng sau dấu câu (. , ! ?)
-    space_pause_factor = 2           # Hệ số tăng thời gian dừng tại khoảng trắng (giữa các từ)
-    max_error_chars = 2              # Số ký tự tối đa sẽ gõ sai trước khi xoá để sửa
-    
+    typing_speed = 0.07
+    thinking_chance = 0.03
+    thinking_pause_range = (1.0, 2.0)
+
     for char in text:
-        # Tạm dừng lâu như đang suy nghĩ
+        # Thỉnh thoảng dừng lại như đang suy nghĩ
         if random.random() < thinking_chance:
             time.sleep(random.uniform(*thinking_pause_range))
 
-        # Giả lập lỗi gõ sai
-        if random.random() < error_chance:
-            wrong_count = random.randint(1, max_error_chars)
-            wrong_chars = []
-            for _ in range(wrong_count):
-                wrong_char = char
-                while wrong_char == char:
-                    if char.isalpha():
-                        pool = [c for c in 'abcdefghijklmnopqrstuvwxyz' if c.lower() != char.lower()]
-                        wrong_char = random.choice(pool)
-                        if char.isupper():
-                            wrong_char = wrong_char.upper()
-                    elif char.isdigit():
-                        pool = [c for c in '0123456789' if c != char]
-                        wrong_char = random.choice(pool)
-                    else:
-                        pool = 'abcdefghijklmnopqrstuvwxyz'
-                        wrong_char = random.choice(pool)
-                wrong_chars.append(wrong_char)
-                keyboard.write(wrong_char)
-                time.sleep(random.uniform(typing_speed * 0.5, typing_speed * 1.5))
-            
-            for _ in range(len(wrong_chars)):
-                keyboard.send('backspace')
-                time.sleep(random.uniform(typing_speed * 0.5, typing_speed * 1.0))
-
+        # Gõ ký tự chính xác
         keyboard.write(char)
 
+        # Nghỉ tùy loại ký tự
         if char in '.!,?':
-            delay = random.uniform(typing_speed * punctuation_pause_factor * 0.5,
-                                    typing_speed * punctuation_pause_factor * 1.5)
+            delay = random.uniform(typing_speed * 2.0, typing_speed * 3.0)
         elif char.isspace():
-            delay = random.uniform(typing_speed * space_pause_factor * 0.5,
-                                    typing_speed * space_pause_factor * 1.5)
+            delay = random.uniform(typing_speed * 1.5, typing_speed * 2.5)
         else:
-            delay = random.uniform(typing_speed * 0.5, typing_speed * 1.5)
+            delay = random.uniform(typing_speed * 0.5, typing_speed * 1.2)
+
         time.sleep(delay)
+
