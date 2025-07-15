@@ -62,7 +62,7 @@ TrayApp v2 được chia thành hai nhóm chức năng chính: **Function 1 (Ch�
 
 #### 2. Gõ Phím Kiểu Người (Human Typing)
 
-* **Mô tả:** Khi được bật, tất cả các tác vụ dán văn bản của TrayApp v2 (OTP, dán tuần tự, cookie) sẽ được thực hiện bằng cách mô phỏng hành vi gõ phím của con người, bao gồm cả việc dừng nghỉ, gõ sai và sửa lại. Điều này cực kỳ hữu ích để vượt qua các cơ chế chống bot trên một số trang web.
+* **Mô tả:** Khi được bật, tất cả các tác vụ dán văn bản của TrayApp v2 (OTP, dán tuần tự, cookie) sẽ được thực hiện bằng cách mô phỏng hành vi gõ phím của con người, bao gồm cả việc dừng nghỉ. Điều này cực kỳ hữu ích để vượt qua các cơ chế chống bot trên một số trang web.
 * **Cách kích hoạt:**
     1.  Vào mục **"Function 2 (On/Off)"**.
     2.  Bật công tắc bên cạnh tính năng **"Human type"**.
