@@ -30,7 +30,7 @@ class Function1Controller:
                     on_data_updated()
         
         def wrapped_paste_by_index():
-            if get_selected_action and get_selected_action() == "Dán từng phần chuỗi có dấu |":
+            if get_selected_action() == "Dán từng phần chuỗi có dấu |":
                 paste_by_index()
                 if on_data_updated:
                     on_data_updated()
@@ -73,9 +73,8 @@ class Function1Controller:
     def try_update_part_buffer(self, text):
         if '|' in text:
             parts = [p.strip() for p in text.split('|')]
-            if 2 <= len(parts) <= 10:
-                logic.PartBuffer[:] = parts
-                logic.CurrentIndex = 1
-                return True
+            logic.PartBuffer[:] = parts
+            logic.CurrentIndex = 1
+            return True
         logic.PartBuffer.clear()
         return False
