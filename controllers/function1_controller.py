@@ -39,8 +39,8 @@ class Function1Controller:
                 if on_data_updated:
                     QTimer.singleShot(0, on_data_updated)
                 
-        keyboard.add_hotkey("shift+f1", wrapped_execute_otp, suppress=True)
-        keyboard.add_hotkey("shift+f1", wrapped_convert_cookie_to_json, suppress=True)
+        keyboard.add_hotkey("ctrl+alt+1", wrapped_execute_otp, suppress=True)
+        keyboard.add_hotkey("ctrl+alt+1", wrapped_convert_cookie_to_json, suppress=True)
 
     def try_update_2fa_key(self, text):
         if BASE32_REGEX.match(text):
