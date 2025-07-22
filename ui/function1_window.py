@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QRadioButton, QButtonGroup, QPushButton, QApplication, QLineEdit, QTextEdit
+import time
+from PyQt5.QtWidgets import (
+    QWidget, QLabel, QVBoxLayout, QHBoxLayout, QRadioButton, QButtonGroup, QPushButton, QApplication, QTextEdit
+)
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QIntValidator
 from util.util import move_to_bottom_right, back_to_main
 from controllers.function1_controller import Function1Controller
 import logic.funtion1_logic as logic
@@ -40,94 +42,69 @@ class Function1Window(QWidget):
 
         # Radio buttons
         self.radio_group = QButtonGroup(self)
+        radio_layout = QVBoxLayout()
+        radio_layout.setSpacing(4)
         for action in self.controller.get_available_actions():
             btn = QRadioButton(action)
-            btn.setStyleSheet("""
-                QRadioButton {
-                    color: white;
-                    font-size: 9.5px;
-                    padding: 2px;
-                }
-                QRadioButton::indicator {
-                    width: 10px;
-                    height: 10px;
-                }
-            """)
+            btn.setStyleSheet(
+                "QRadioButton {color: #f0f0f0; font-size: 10px; padding: 1px 0px;}"
+                "QRadioButton::indicator {width: 11px; height: 11px;}"
+            )
             self.radio_group.addButton(btn)
-            main_layout.addWidget(btn)
+            radio_layout.addWidget(btn)
             btn.toggled.connect(lambda checked, b=btn: self.on_action_selected_checked(b, checked))
+        radio_widget = QWidget(self)
+        radio_widget.setLayout(radio_layout)
+        radio_widget.setStyleSheet("background: transparent; margin-bottom: 2px;")
+        main_layout.addWidget(radio_widget, alignment=Qt.AlignCenter)
 
         # Key label
         self.key_label = QLabel("Key: None", self)
-        self.key_label.setStyleSheet("color: #80ff80; font-size: 9.5px;")
-        main_layout.addWidget(self.key_label)
+        self.key_label.setStyleSheet("color: #80ff80; font-size: 9.5px; margin-top: 1px;")
+        main_layout.addWidget(self.key_label, alignment=Qt.AlignCenter)
 
-        # Paste block
-        self.paste_widget = QWidget(self)
-        paste_layout = QVBoxLayout(self.paste_widget)
-        paste_layout.setContentsMargins(0, 5, 0, 5)
-        paste_layout.setSpacing(4)
+        # OTP + countdown (ẩn mặc định)
+        otp_row = QHBoxLayout()
+        self.otp_label = QLabel("OTP: ------", self)
+        self.otp_label.setStyleSheet("color: #ffd480; font-size: 15px; font-weight: bold; padding: 1px 6px; border-radius: 6px; background: #222;")
+        otp_row.addStretch()
+        otp_row.addWidget(self.otp_label)
+        self.countdown_label = QLabel("", self)
+        self.countdown_label.setStyleSheet("color: #80ff80; font-size: 11px; margin-left: 7px;")
+        otp_row.addWidget(self.countdown_label)
+        otp_row.addStretch()
+        main_layout.addLayout(otp_row)
+        self.otp_label.setVisible(False)
+        self.countdown_label.setVisible(False)
 
-        index_layout = QHBoxLayout()
-        index_label = QLabel("Index:", self)
-        index_label.setStyleSheet("color: #ffd480; font-size: 10px;")
-        self.index_input = QLineEdit(str(logic.CurrentIndex), self)
-        self.index_input.setValidator(QIntValidator(1, 10))
-        self.index_input.setStyleSheet("color: white; font-size: 10px; background-color: #333; border: 1px solid #555; border-radius: 3px; padding: 2px;")
-        self.index_input.setFixedWidth(40)
-        self.index_input.textChanged.connect(self.on_index_changed)
-        index_layout.addWidget(index_label)
-        index_layout.addWidget(self.index_input)
-        index_layout.addStretch()
-        paste_layout.addLayout(index_layout)
-
-        self.buffer_edit = QTextEdit(self)
-        self.buffer_edit.setStyleSheet("color: #ffd480; font-size: 10px; background-color: #333; border-radius: 3px;")
-        self.buffer_edit.setPlaceholderText("(empty buffer)")
-        self.buffer_edit.textChanged.connect(self.on_buffer_edited)
-        paste_layout.addWidget(self.buffer_edit)
-        
-        main_layout.addWidget(self.paste_widget)
-        main_layout.addStretch()
-
-        # Cookie display input
+        # Cookie display input (ẩn mặc định)
         self.cookie_input = QTextEdit(self)
-        self.cookie_input.setStyleSheet("""
-            color: #ffd480;
-            font-size: 10px;
-            background-color: #333;
-            border: 1px solid #555;
-            border-radius: 3px;
-            padding: 4px;
-        """)
+        self.cookie_input.setStyleSheet(
+            "color: #ffd480; font-size: 10px; background-color: #232323; border: 1px solid #444; border-radius: 6px; padding: 4px;"
+        )
         self.cookie_input.setPlaceholderText("Cookies sẽ hiển thị ở đây...")
         self.cookie_input.setReadOnly(True)
-        self.cookie_input.setFixedHeight(185) 
+        self.cookie_input.setFixedHeight(90)
         main_layout.addWidget(self.cookie_input)
         self.cookie_input.setVisible(False)
-        
-        # Back button
-        btn_back = QPushButton("Quay lại")
-        btn_back.setFixedSize(80, 26)
-        btn_back.setStyleSheet("""
-            QPushButton {
-                color: white;
-                font-size: 10px;
-                background-color: #c0392b;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #e74c3c;
-            }
-        """)
-        btn_back.clicked.connect(lambda: back_to_main(self))
 
+        main_layout.addStretch()
+
+        # Back button
+        btn_back = QPushButton("⟵ Quay lại")
+        btn_back.setFixedSize(80, 26)
+        btn_back.setStyleSheet(
+            "QPushButton {color: white; font-size: 11px; background-color: #c0392b; border-radius: 8px;}"
+            "QPushButton:hover {background-color: #e74c3c;}"
+        )
+        btn_back.clicked.connect(lambda: back_to_main(self))
         footer = QHBoxLayout()
         footer.addStretch()
         footer.addWidget(btn_back)
         main_layout.addLayout(footer)
 
-        self.paste_widget.setVisible(False)
+        self.setFixedSize(260, 300)
+        self.setStyleSheet("background-color: rgba(25, 25, 25, 230); border-radius: 6px;")
         move_to_bottom_right(self, position=15)
 
     def on_action_selected_checked(self, button, checked):
@@ -135,25 +112,28 @@ class Function1Window(QWidget):
             self.selected_action = button.text()
             print(f"🔘 Action selected: {self.selected_action}")
 
-            is_paste_action = self.selected_action == "Dán từng phần chuỗi có dấu |"
-            is_cookie_action = self.selected_action == "Convert Cookie sang JSON"
+            # Ẩn tất cả các widget liên quan chức năng
+            self.otp_label.setVisible(False)
+            self.countdown_label.setVisible(False)
+            self.cookie_input.setVisible(False)
 
-            self.paste_widget.setVisible(is_paste_action)
-            self.cookie_input.setVisible(is_cookie_action)
-            self.key_label.setVisible(not is_paste_action and not is_cookie_action)
+            # Hiện widget đúng với chức năng
+            if self.selected_action == "Sinh mã OTP từ 2FA Key":
+                self.otp_label.setVisible(True)
+                self.countdown_label.setVisible(True)
+            elif self.selected_action == "Convert Cookie sang JSON":
+                self.cookie_input.setVisible(True)
 
             self.check_clipboard(force=True)
-
-
-    def on_index_changed(self, text):
-        if text and text.isdigit():
-            logic.CurrentIndex = int(text)
-
-    def on_buffer_edited(self):
-        if not self._is_updating_ui:
-            text = self.buffer_edit.toPlainText()
-            lines = [line.split('. ', 1)[1] if '. ' in line else line for line in text.split('\n') if line.strip()]
-            logic.PartBuffer[:] = lines
+            if self.selected_action == "Sinh mã OTP từ 2FA Key":
+                if not hasattr(self, 'otp_timer'):
+                    self.otp_timer = QTimer(self)
+                    self.otp_timer.timeout.connect(self.update_otp_display)
+                self.otp_timer.start(1000)
+                self.update_otp_display()
+            else:
+                if hasattr(self, 'otp_timer'):
+                    self.otp_timer.stop()
 
     def check_clipboard(self, force=False):
         try:
@@ -161,41 +141,40 @@ class Function1Window(QWidget):
             text = clipboard.text().strip()
             if text != self.last_clipboard or force:
                 self.last_clipboard = text
-                
                 if self.selected_action == "Sinh mã OTP từ 2FA Key":
                     if self.controller.try_update_2fa_key(text):
                         logic.Current2FAKey = text
                         self.update_status_display()
                         return
-                
-                elif self.selected_action == "Dán từng phần chuỗi có dấu |" and "|" in text:
-                    if text != logic.LastValidClipboard:
-                        self.controller.try_update_part_buffer(text)
-
                 elif self.selected_action == "Convert Cookie sang JSON":
                     try:
                         logic.CurrentCookieJson = logic.convert_cookie_to_json(text)
-                    except Exception as e:
+                    except Exception:
                         logic.CurrentCookieJson = "[Lỗi chuyển cookie sang JSON]"
-                
                 self.update_status_display()
-
         except pyperclip.PyperclipException:
             pass
 
     def update_status_display(self):
         self._is_updating_ui = True
-
         self.key_label.setText(f"{logic.Current2FAKey or 'None'}")
-
-        current_buffer_text = "\n".join(f"{i+1}. {line}" for i, line in enumerate(logic.PartBuffer))
-        if self.buffer_edit.toPlainText() != current_buffer_text:
-            self.buffer_edit.setPlainText(current_buffer_text)
-
-        if self.index_input.text() != str(logic.CurrentIndex):
-            self.index_input.setText(str(logic.CurrentIndex))
-        
-        if hasattr(self, 'cookie_input'):
+        if self.selected_action == "Sinh mã OTP từ 2FA Key":
+            self.update_otp_display()
+        if self.selected_action == "Convert Cookie sang JSON":
             self.cookie_input.setPlainText(logic.CurrentCookieJson or "")
-
         self._is_updating_ui = False
+
+    def update_otp_display(self):
+        if logic.Current2FAKey:
+            try:
+                otp = logic.generate_totp(logic.Current2FAKey)
+                self.otp_label.setText(f"OTP: {otp}")
+                seconds = int(time.time())
+                remain = 30 - (seconds % 30)
+                self.countdown_label.setText(f"{remain:02d}s")
+            except Exception:
+                self.otp_label.setText("OTP: ------")
+                self.countdown_label.setText("")
+        else:
+            self.otp_label.setText("OTP: ------")
+            self.countdown_label.setText("")

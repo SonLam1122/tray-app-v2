@@ -9,9 +9,6 @@ import json
 
 # Biến toàn cục lưu key và buffer
 Current2FAKey = None
-PartBuffer = []
-LastValidClipboard = None
-CurrentIndex = 1
 CurrentCookieJson = ""
 # Regex kiểm tra key 2FA hợp lệ
 BASE32_REGEX = re.compile(r'^[A-Z2-7]{16,}$')
@@ -27,7 +24,7 @@ def generate_totp(secret):
     return f'{code:06d}'
 
 def otp():
-    global Current2FAKey, PartBuffer, LastValidClipboard
+    global Current2FAKey
     # Lấy clipboard
     clipboard = pyperclip.paste().strip()
     

@@ -10,6 +10,48 @@ _click_times = []
 _enabled_features = set()
 _stop_flags = {}
 
+# Biến toàn cục cho tính năng dán từng phần chuỗi có dấu |
+PartBuffer = []
+CurrentIndex = 1
+LastValidClipboard = None
+
+# Hàm cập nhật buffer khi có chuỗi chứa |
+def try_update_part_buffer(text):
+    global PartBuffer, CurrentIndex, LastValidClipboard
+    if '|' in text:
+        parts = [p.strip() for p in text.split('|')]
+        PartBuffer[:] = parts
+        CurrentIndex = 1
+        LastValidClipboard = text
+        return True
+    PartBuffer.clear()
+    return False
+
+def paste_by_index():
+    global CurrentIndex, PartBuffer
+    import logic.funtion2_logic as logic
+    try:
+        idx = int(CurrentIndex) - 1
+        if 0 <= idx < len(PartBuffer):
+            text_to_paste = PartBuffer[idx]
+            import util.util as util
+            util.smart_type(text_to_paste)
+            CurrentIndex += 1
+            if CurrentIndex > len(PartBuffer):
+                CurrentIndex = 1
+    except (ValueError, IndexError) as e:
+        print(f"Lỗi khi dán theo chỉ mục: {e}")
+
+# Hàm bật/tắt hotkey cho tính năng này
+def set_paste_by_index_hotkey(enabled):
+    if enabled:
+        keyboard.add_hotkey("ctrl+shift+v", paste_by_index, suppress=True)
+    else:
+        try:
+            keyboard.remove_hotkey("ctrl+shift+v")
+        except Exception:
+            pass
+
 def is_feature_enabled(name):
     return name in _enabled_features
 

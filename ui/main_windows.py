@@ -30,8 +30,8 @@ class MiniTrayWindow(QWidget):
 
         # Tạo các nút
         buttons = [
-            ("Function 1 (Radio)", self.on_func1),
-            ("Function 2 (On/Off)", self.on_func2),
+            ("Function 1", self.on_func1),
+            ("Function 2", self.on_func2),
             ("Settings", self.on_settings),
             ("Exit", QApplication.quit)
         ]
