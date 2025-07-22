@@ -47,7 +47,7 @@ class Function1Window(QWidget):
         for action in self.controller.get_available_actions():
             btn = QRadioButton(action)
             btn.setStyleSheet(
-                "QRadioButton {color: #f0f0f0; font-size: 10px; padding: 1px 0px;}"
+                "QRadioButton {color: white; font-size: 12px; font-weight: 500; background: #232323; border-radius: 6px;}"
                 "QRadioButton::indicator {width: 11px; height: 11px;}"
             )
             self.radio_group.addButton(btn)
@@ -117,12 +117,20 @@ class Function1Window(QWidget):
             self.countdown_label.setVisible(False)
             self.cookie_input.setVisible(False)
 
-            # Hiện widget đúng với chức năng
+            # Reset nền
+            self.otp_label.setStyleSheet("color: #ffd480; font-size: 15px; font-weight: bold; padding: 1px 6px; border-radius: 6px; background: #222;")
+            self.countdown_label.setStyleSheet("color: #80ff80; font-size: 11px; margin-left: 7px; background: #222; border-radius: 5px; padding: 2px 8px;")
+            self.cookie_input.setStyleSheet("color: #ffd480; font-size: 10px; background-color: #232323; border: 1px solid #444; border-radius: 6px; padding: 4px;")
+
+            # Hiện widget đúng với chức năng và thêm nền tối
             if self.selected_action == "Sinh mã OTP từ 2FA Key":
                 self.otp_label.setVisible(True)
                 self.countdown_label.setVisible(True)
+                self.otp_label.setStyleSheet("color: white; font-size: 15px; font-weight: bold; padding: 1px 6px; border-radius: 6px; background: rgba(30,30,30,0.85);")
+                self.countdown_label.setStyleSheet("color: white; font-size: 11px; margin-left: 7px; background: rgba(30,30,30,0.85); border-radius: 5px; padding: 2px 8px;")
             elif self.selected_action == "Convert Cookie sang JSON":
                 self.cookie_input.setVisible(True)
+                self.cookie_input.setStyleSheet("color: white; font-size: 11px; background-color: rgba(30,30,30,0.85); border: 1px solid #444; border-radius: 6px; padding: 4px;")
 
             self.check_clipboard(force=True)
             if self.selected_action == "Sinh mã OTP từ 2FA Key":

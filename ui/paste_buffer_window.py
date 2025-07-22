@@ -15,10 +15,13 @@ class PasteBufferWindow(QWidget):
         self.init_ui()
         self.update_panel()
         QTimer.singleShot(0, self.move_to_bottom_right)
-
         self.clipboard_timer = QTimer(self)
         self.clipboard_timer.timeout.connect(self.check_clipboard)
         self.clipboard_timer.start(500)
+        # Bổ sung timer để cập nhật index khi paste
+        self.index_timer = QTimer(self)
+        self.index_timer.timeout.connect(self.sync_index)
+        self.index_timer.start(300)
 
     def move_to_bottom_right(self):
         screen = self.screen() if hasattr(self, 'screen') else None
@@ -92,3 +95,6 @@ class PasteBufferWindow(QWidget):
         if text != logic2.LastValidClipboard and '|' in text:
             logic2.try_update_part_buffer(text)
             self.update_panel() 
+
+    def sync_index(self):
+        self.index_input.setText(str(logic2.CurrentIndex)) 

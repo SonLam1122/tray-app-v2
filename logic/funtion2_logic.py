@@ -1,10 +1,12 @@
 import random
+import string
 import sys
 import threading
 import mouse
 import pyperclip
 import time
 import keyboard
+import pygetwindow as gw
 
 _click_times = []
 _enabled_features = set()
@@ -29,13 +31,14 @@ def try_update_part_buffer(text):
 
 def paste_by_index():
     global CurrentIndex, PartBuffer
-    import logic.funtion2_logic as logic
     try:
         idx = int(CurrentIndex) - 1
         if 0 <= idx < len(PartBuffer):
             text_to_paste = PartBuffer[idx]
-            import util.util as util
-            util.smart_type(text_to_paste)
+            if is_feature_enabled("Human type"):
+                human_type_handler(text_to_paste)
+            else:
+                keyboard.write(text_to_paste)
             CurrentIndex += 1
             if CurrentIndex > len(PartBuffer):
                 CurrentIndex = 1
@@ -96,26 +99,82 @@ def start_double_click_copy_monitor():
 
     threading.Thread(target=monitor, daemon=True).start()
 
+def focus_previous_window():
+    try:
+        
+        # Lấy tiêu đề cửa sổ app của bạn (giả sử là 'TrayApp' hoặc tên file main)
+        my_titles = [w.title for w in gw.getAllWindows() if w.isActive]
+        # Lấy tất cả cửa sổ ngoài app của bạn
+        windows = [w for w in gw.getAllWindows() if w.title and not any(t in w.title for t in my_titles)]
+        # Ưu tiên cửa sổ đang mở và có thể activate
+        for win in windows:
+            try:
+                win.activate()
+                return True
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"[focus_previous_window] Lỗi: {e}")
+    return False
+
+
 def human_type_handler(text: str):
-    typing_speed = 0.07
+    typing_speed = 0.12
     thinking_chance = 0.03
     thinking_pause_range = (1.0, 2.0)
+    error_count = 0
 
-    for char in text:
-        # Thỉnh thoảng dừng lại như đang suy nghĩ
-        if random.random() < thinking_chance:
-            time.sleep(random.uniform(*thinking_pause_range))
+    # Tự động chuyển focus về cửa sổ trước đó
+    focus_previous_window()
+    time.sleep(0.5)  # Đợi hệ điều hành chuyển focus
 
-        # Gõ ký tự chính xác
-        keyboard.write(char)
+    for mod in ['alt', 'ctrl', 'shift', 'windows']:
+        try:
+            keyboard.release(mod)
+        except Exception:
+            pass
 
-        # Nghỉ tùy loại ký tự
-        if char in '.!,?':
-            delay = random.uniform(typing_speed * 2.0, typing_speed * 3.0)
-        elif char.isspace():
-            delay = random.uniform(typing_speed * 1.5, typing_speed * 2.5)
-        else:
-            delay = random.uniform(typing_speed * 0.5, typing_speed * 1.2)
+    # Chờ cho đến khi người dùng thả hết các phím modifier, có timeout
+    start = time.time()
+    while any(keyboard.is_pressed(mod) for mod in ['alt', 'ctrl', 'shift', 'windows']):
+        for mod in ['alt', 'ctrl', 'shift', 'windows']:
+            try:
+                keyboard.release(mod)
+            except Exception:
+                pass
+        time.sleep(0.05)
+        if time.time() - start > 2.0:
+            break
 
-        time.sleep(delay)
+    if len(text) < 100 and all(ord(c) < 128 for c in text):
+        for char in text:
+            try:
+                if random.random() < thinking_chance:
+                    time.sleep(random.uniform(*thinking_pause_range))
+                keyboard.write(char)
+                if char in '.!,?':
+                    delay = random.uniform(typing_speed * 2.0, typing_speed * 3.0)
+                elif char.isspace():
+                    delay = random.uniform(typing_speed * 1.5, typing_speed * 2.5)
+                else:
+                    delay = random.uniform(typing_speed * 0.5, typing_speed * 1.2)
+                time.sleep(delay)
+            except Exception as e:
+                error_count += 1
+                if error_count >= 2:
+                    pyperclip.copy(text)
+                    keyboard.press_and_release('ctrl+v')
+                    break
+    else:
+        pyperclip.copy(text)
+        keyboard.press_and_release('ctrl+v')
+        time.sleep(0.1)
+
+
+def force_release_modifiers():
+    for mod in ['alt', 'ctrl', 'shift', 'windows']:
+        try:
+            keyboard.release(mod)
+        except Exception:
+            pass
 
